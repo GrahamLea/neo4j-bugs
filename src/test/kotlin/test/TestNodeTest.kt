@@ -65,11 +65,12 @@ class TestNodeTest {
                     } catch (e: Throwable) {
                         println("    Caught $e")
                         errors.add(e)
+                        break
                     }
             }
         }
         try {
-            deleteAllNodesOneAtATime()
+            deleteAllNodesOneAtATime(readOnlyTransactionCallingThread)
             readOnlyTransactionCallingThread.join()
         } catch (e: Exception) {
             readOnlyTransactionCallingThread.interrupt()
@@ -95,8 +96,11 @@ class TestNodeTest {
         return count
     }
 
-    private fun deleteAllNodesOneAtATime() {
+    private fun deleteAllNodesOneAtATime(readOnlyTransactionCallingThread: Thread) {
         for (i in 1 until NODE_COUNT) {
+            if (!readOnlyTransactionCallingThread.isAlive) {
+                break
+            }
             println("Deleting 1 node...")
             val node = testNodeRepository.findByName(nameForNode(i))
             testNodeRepository.delete(node)
